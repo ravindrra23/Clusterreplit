@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { mockService } from '../services/mockService';
+import { useAuth } from '@/context/AuthContext';
+import { mockService } from '@/services/mockService';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { IndianRupee, TrendingUp, Activity } from 'lucide-react';
 

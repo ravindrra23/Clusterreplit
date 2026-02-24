@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { mockService } from '../services/mockService';
-import { Coupon } from '../types';
+import { mockService } from '@/services/mockService';
+import { Coupon } from '@/types/types';
 import { Search, ArrowUpRight, ArrowDownLeft, Filter, Gift, Download, FileText, Printer, ChevronRight, ArrowRight } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 

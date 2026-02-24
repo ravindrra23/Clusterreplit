@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { mockService } from '../services/mockService';
-import { SubAdminUser, SubAdminPermissions } from '../types';
+import { mockService } from '@/services/mockService';
+import { SubAdminUser, SubAdminPermissions } from '@/types/types';
 import { 
   Shield, 
   UserPlus, 

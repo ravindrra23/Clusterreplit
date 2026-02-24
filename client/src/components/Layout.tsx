@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { UserRole, Notification } from '../types';
-import { mockService } from '../services/mockService';
+import { useAuth } from '@/context/AuthContext';
+import { UserRole, Notification } from '@/types/types';
+import { mockService } from '@/services/mockService';
 import { 
   LayoutDashboard, 
   QrCode, 

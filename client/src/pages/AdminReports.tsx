@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { mockService } from '../services/mockService';
+import { mockService } from '@/services/mockService';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, BarChart, Bar } from 'recharts';
 import { IndianRupee, TrendingUp, Activity, Map, Download } from 'lucide-react';
 

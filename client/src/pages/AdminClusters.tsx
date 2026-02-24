@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { mockService } from '../services/mockService';
-import { Cluster, Business } from '../types';
+import { mockService } from '@/services/mockService';
+import { Cluster, Business } from '@/types/types';
 import { Map, Plus, MoreHorizontal, Trash2, Calendar, Eye, X, AlertTriangle, Download, Store, User, ChevronRight, Ticket, CheckCircle, Clock, XCircle, Activity, Heart, Edit } from 'lucide-react';
 
 const AdminClusters: React.FC = () => {

@@ -1,5 +1,5 @@
 
-import { Business, BusinessCategory, Cluster, Coupon, DiscountRule, Stats, UserRole, Notification, RedemptionRecord, SubAdminPermissions, SubAdminUser, LuckyGift } from '../types';
+import { Business, BusinessCategory, Cluster, Coupon, DiscountRule, Stats, UserRole, Notification, RedemptionRecord, SubAdminPermissions, SubAdminUser, LuckyGift } from '@/types/types';
 
 const STORAGE_KEYS = {
   CLUSTERS: 'cg_clusters_data_v1',

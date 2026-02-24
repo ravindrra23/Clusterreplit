@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { mockService } from '../services/mockService';
-import { Coupon, Business } from '../types';
+import { useAuth } from '@/context/AuthContext';
+import { mockService } from '@/services/mockService';
+import { Coupon, Business } from '@/types/types';
 import { 
   Ticket, CheckCircle, Smartphone, IndianRupee, Send, User, 
   History, Copy, X, AlertCircle, Layers, Printer, Download, Sparkles, Star, ShieldAlert, Group, Type, Clock, Lock

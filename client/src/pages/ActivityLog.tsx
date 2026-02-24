@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { mockService } from '../services/mockService';
-import { Coupon } from '../types';
+import { useAuth } from '@/context/AuthContext';
+import { mockService } from '@/services/mockService';
+import { Coupon } from '@/types/types';
 import { Search, ArrowUpRight, ArrowDownLeft, Filter } from 'lucide-react';
 
 const ActivityLog: React.FC = () => {

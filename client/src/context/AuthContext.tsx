@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { User, UserRole, SubAdminPermissions } from '../types';
-import { mockService } from '../services/mockService';
+import { User, UserRole, SubAdminPermissions } from '@/types/types';
+import { mockService } from '@/services/mockService';
 
 interface AuthContextType {
   user: User | null;

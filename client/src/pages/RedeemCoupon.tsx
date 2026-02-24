@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { mockService } from '../services/mockService';
-import { Coupon, DiscountRule } from '../types';
+import { useAuth } from '@/context/AuthContext';
+import { mockService } from '@/services/mockService';
+import { Coupon, DiscountRule } from '@/types/types';
 import { QrCode, Search, CheckCircle, XCircle, ShoppingBag, IndianRupee, AlertCircle, RefreshCw, Gift, Sparkles, X } from 'lucide-react';
 
 const RedeemCoupon: React.FC = () => {

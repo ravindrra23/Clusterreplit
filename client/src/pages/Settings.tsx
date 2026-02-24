@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { mockService } from '../services/mockService';
-import { Business, DiscountRule, LuckyGift } from '../types';
+import { useAuth } from '@/context/AuthContext';
+import { mockService } from '@/services/mockService';
+import { Business, DiscountRule, LuckyGift } from '@/types/types';
 import { Save, User, Image as ImageIcon, Camera, Ticket, Mail, Link, CheckCircle, Trash2, Lock, AlertCircle, Unlock, Home, Gift, Hash, Plus, X, Eye, EyeOff, Smartphone } from 'lucide-react';
 
 const PRESET_AVATARS = [

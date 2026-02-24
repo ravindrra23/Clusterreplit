@@ -1,22 +1,22 @@
 
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { UserRole } from './types/types';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import IssueCoupon from './pages/IssueCoupon';
-import RedeemCoupon from './pages/RedeemCoupon';
-import Settings from './pages/Settings';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminClusters from './pages/AdminClusters';
-import AdminBusinesses from './pages/AdminBusinesses';
-import AdminReports from './pages/AdminReports';
-import AdminActivityLog from './pages/AdminActivityLog';
-import AdminSettings from './pages/AdminSettings';
-import Analytics from './pages/Analytics';
-import ActivityLog from './pages/ActivityLog';
-import Layout from './components/Layout';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { UserRole } from '@/types/types';
+import Login from '@/pages/Login';
+import Dashboard from '@/pages/Dashboard';
+import IssueCoupon from '@/pages/IssueCoupon';
+import RedeemCoupon from '@/pages/RedeemCoupon';
+import Settings from '@/pages/Settings';
+import AdminDashboard from '@/pages/AdminDashboard';
+import AdminClusters from '@/pages/AdminClusters';
+import AdminBusinesses from '@/pages/AdminBusinesses';
+import AdminReports from '@/pages/AdminReports';
+import AdminActivityLog from '@/pages/AdminActivityLog';
+import AdminSettings from '@/pages/AdminSettings';
+import Analytics from '@/pages/Analytics';
+import ActivityLog from '@/pages/ActivityLog';
+import Layout from '@/components/Layout';
 
 const ProtectedRoute = ({ children, allowedRoles }: { children?: React.ReactNode; allowedRoles?: UserRole[] }) => {
   const { user } = useAuth();

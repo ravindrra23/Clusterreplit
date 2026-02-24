@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { mockService } from '../services/mockService';
-import { UserRole, Business } from '../types';
+import { useAuth } from '@/context/AuthContext';
+import { mockService } from '@/services/mockService';
+import { UserRole, Business } from '@/types/types';
 import { Users, Store, Shield, ChevronRight, Loader, Lock, Mail, Eye, EyeOff, AlertCircle, Smartphone } from 'lucide-react';
 
 const Login: React.FC = () => {

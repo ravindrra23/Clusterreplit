@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { mockService } from '../services/mockService';
-import { Business, Cluster, UserRole } from '../types';
-import { useAuth } from '../context/AuthContext';
+import { mockService } from '@/services/mockService';
+import { Business, Cluster, UserRole } from '@/types/types';
+import { useAuth } from '@/context/AuthContext';
 import { 
   Store, Search, Filter, MoreHorizontal, Trash2, Eye, 
   MapPin, ToggleRight, ToggleLeft, User, ShieldCheck, X, AlertTriangle, Plus, Smartphone, Calendar, Home, Phone, RotateCcw, Check, Edit, Unlock, Ticket

@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
-import { mockService } from '../services/mockService';
-import { useAuth } from '../context/AuthContext';
-import { Stats, Cluster, UserRole } from '../types';
+import { mockService } from '@/services/mockService';
+import { useAuth } from '@/context/AuthContext';
+import { Stats, Cluster, UserRole } from '@/types/types';
 import StatCard from '../components/StatCard';
 import { LayoutDashboard, Users, Map, IndianRupee, Megaphone, Send, CheckCircle, Target, ShieldAlert, TicketCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
