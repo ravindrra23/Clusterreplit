@@ -17,19 +17,24 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
 
   const login = async (role: UserRole, identifier: string, password?: string, merchantName?: string): Promise<boolean> => {
     if (role === UserRole.SUPER_ADMIN) {
-      setUser({
-        id: 'admin-1',
-        name: 'Super Admin',
-        role: UserRole.SUPER_ADMIN,
-        permissions: {
-          canManageClusters: true,
-          canManageBusinesses: true,
-          canBroadcast: true,
-          canViewReports: true,
-          canDownloadData: true,
-        }
-      });
-      return true;
+      if (!identifier || !password) return false;
+      const valid = await mockService.verifySuperAdmin(identifier, password);
+      if (valid) {
+        setUser({
+          id: 'admin-1',
+          name: 'Super Admin',
+          role: UserRole.SUPER_ADMIN,
+          permissions: {
+            canManageClusters: true,
+            canManageBusinesses: true,
+            canBroadcast: true,
+            canViewReports: true,
+            canDownloadData: true,
+          }
+        });
+        return true;
+      }
+      return false;
     } else if (role === UserRole.SUB_ADMIN) {
       if (!identifier || !password) return false;
       const staff = await mockService.verifySubAdmin(identifier, password);
@@ -44,21 +49,29 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
       }
       return false;
     } else if (role === UserRole.BUSINESS_OWNER) {
+      if (!identifier || !password) return false;
       try {
         const business = await mockService.getBusinessById(identifier);
         if (business) {
-          setUser({
-            id: business.id,
-            name: business.ownerName,
-            role: UserRole.BUSINESS_OWNER,
-            businessId: business.id,
-            profilePhotoUrl: business.profilePhotoUrl,
-          });
-          return true;
+          const now = new Date();
+          const expiry = new Date(business.expiryDate);
+          if (expiry < now) return false;
+          const valid = await mockService.verifyBusinessOwner(identifier, password);
+          if (valid) {
+            setUser({
+              id: business.id,
+              name: business.ownerName,
+              role: UserRole.BUSINESS_OWNER,
+              businessId: business.id,
+              profilePhotoUrl: business.profilePhotoUrl,
+            });
+            return true;
+          }
         }
       } catch (error) {
         console.error("Failed to login", error);
       }
+      return false;
     } else if (role === UserRole.SUB_MERCHANT) {
       if (!identifier || !password || !merchantName) return false;
       const biz = await mockService.verifySubMerchant(identifier, password, merchantName);

@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { mockService } from '@/services/mockService';
-import { SubAdminUser, SubAdminPermissions } from '@/types/types';
+import { SubAdminUser, SubAdminPermissions, SuperAdminConfig } from '@/types/types';
 import { 
   Shield, 
   UserPlus, 
@@ -23,12 +23,26 @@ import {
   ShieldAlert,
   Key,
   Eye,
-  EyeOff
+  EyeOff,
+  Save,
+  AlertCircle
 } from 'lucide-react';
 
 const AdminSettings: React.FC = () => {
   const [subAdmins, setSubAdmins] = useState<SubAdminUser[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [superAdminEmail, setSuperAdminEmail] = useState('');
+  const [superAdminNewPassword, setSuperAdminNewPassword] = useState('');
+  const [showSuperPass, setShowSuperPass] = useState(false);
+  const [superAdminSaved, setSuperAdminSaved] = useState(false);
+  const [superAdminError, setSuperAdminError] = useState<string | null>(null);
+
+  useEffect(() => {
+    mockService.getSuperAdminConfig().then(config => {
+      setSuperAdminEmail(config.email);
+    });
+  }, []);
   const [modalStep, setModalStep] = useState(1);
   const [editingUser, setEditingUser] = useState<SubAdminUser | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,6 +60,21 @@ const AdminSettings: React.FC = () => {
     canViewReports: true,
     canDownloadData: false,
   });
+
+  const handleSaveSuperAdmin = async () => {
+    setSuperAdminError(null);
+    if (!superAdminEmail) { setSuperAdminError('Email cannot be empty.'); return; }
+    if (superAdminNewPassword && superAdminNewPassword.length < 6) { setSuperAdminError('Password must be at least 6 characters.'); return; }
+    const currentConfig = await mockService.getSuperAdminConfig();
+    const newConfig: SuperAdminConfig = {
+      email: superAdminEmail,
+      password: superAdminNewPassword || currentConfig.password,
+    };
+    await mockService.setSuperAdminConfig(newConfig);
+    setSuperAdminNewPassword('');
+    setSuperAdminSaved(true);
+    setTimeout(() => setSuperAdminSaved(false), 3000);
+  };
 
   const loadUsers = () => {
     mockService.getSubAdmins().then(setSubAdmins);
@@ -151,6 +180,67 @@ const AdminSettings: React.FC = () => {
           <UserPlus size={20} className="mr-2" />
           Add Staff Member
         </button>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 flex items-center space-x-3">
+          <Shield className="text-indigo-600" size={24} />
+          <h2 className="text-xl font-bold text-slate-800">Super Admin Account Security</h2>
+        </div>
+        <div className="p-6 space-y-5">
+          {superAdminSaved && (
+            <div className="bg-green-50 border border-green-100 text-green-700 px-4 py-3 rounded-xl text-sm font-bold flex items-center">
+              <CheckCircle size={16} className="mr-2" /> Super Admin credentials updated successfully.
+            </div>
+          )}
+          {superAdminError && (
+            <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm font-bold flex items-center">
+              <AlertCircle size={16} className="mr-2" /> {superAdminError}
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Admin Email (Used for Recovery)</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  type="email"
+                  value={superAdminEmail}
+                  onChange={e => setSuperAdminEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="admin@clustergrowth.com"
+                />
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1">Password recovery OTP will be sent to this email.</p>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">New Password (Leave blank to keep current)</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  type={showSuperPass ? "text" : "password"}
+                  value={superAdminNewPassword}
+                  onChange={e => setSuperAdminNewPassword(e.target.value)}
+                  className="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="Enter new password"
+                />
+                <button type="button" onClick={() => setShowSuperPass(!showSuperPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600">
+                  {showSuperPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1">Default password is: admin@123</p>
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={handleSaveSuperAdmin}
+              className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold flex items-center hover:bg-indigo-700 shadow-lg transition-all active:scale-95"
+            >
+              <Save size={16} className="mr-2" />
+              Save Admin Credentials
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">

@@ -46,6 +46,20 @@ export interface LuckyGift {
   quantity: number;
 }
 
+export interface SuperAdminConfig {
+  email: string;
+  password: string;
+}
+
+export interface OTPRecord {
+  email: string;
+  otp: string;
+  role: string;
+  expiresAt: number;
+  businessId?: string;
+  merchantName?: string;
+}
+
 export interface Business {
   id: string;
   name: string;
@@ -56,6 +70,7 @@ export interface Business {
   email: string;
   phone?: string; 
   profilePhotoUrl?: string; 
+  ownerPassword?: string;
   discountRule: DiscountRule;
   subscriptionStatus: 'ACTIVE' | 'PAST_DUE' | 'CANCELLED';
   expiryDate: string;

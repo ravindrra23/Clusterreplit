@@ -1,5 +1,5 @@
 
-import { Business, BusinessCategory, Cluster, Coupon, DiscountRule, Stats, UserRole, Notification, RedemptionRecord, SubAdminPermissions, SubAdminUser, LuckyGift } from '@/types/types';
+import { Business, BusinessCategory, Cluster, Coupon, DiscountRule, Stats, UserRole, Notification, RedemptionRecord, SubAdminPermissions, SubAdminUser, LuckyGift, SuperAdminConfig, OTPRecord } from '@/types/types';
 
 const STORAGE_KEYS = {
   CLUSTERS: 'cg_clusters_data_v1',
@@ -8,6 +8,8 @@ const STORAGE_KEYS = {
   CATEGORIES: 'cg_categories_v1',
   NOTIFICATIONS: 'cg_notifications_v1',
   SUB_ADMINS: 'cg_subadmins_list_v1',
+  SUPER_ADMIN_CONFIG: 'cg_super_admin_config_v1',
+  OTP_RECORDS: 'cg_otp_records_v1',
 };
 
 const DEFAULT_DISCOUNT: DiscountRule = {
@@ -116,6 +118,22 @@ const db = {
   setCategories: (data: string[]) => {
     _cache[STORAGE_KEYS.CATEGORIES] = data;
     localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(data));
+  },
+  getSuperAdminConfig: (): SuperAdminConfig => {
+    const data = localStorage.getItem(STORAGE_KEYS.SUPER_ADMIN_CONFIG);
+    return data ? JSON.parse(data) : { email: 'admin@clustergrowth.com', password: 'admin@123' };
+  },
+  setSuperAdminConfig: (config: SuperAdminConfig) => {
+    localStorage.setItem(STORAGE_KEYS.SUPER_ADMIN_CONFIG, JSON.stringify(config));
+  },
+  getOTPRecords: (): OTPRecord[] => {
+    const data = localStorage.getItem(STORAGE_KEYS.OTP_RECORDS);
+    const records: OTPRecord[] = data ? JSON.parse(data) : [];
+    const now = Date.now();
+    return records.filter(r => r.expiresAt > now);
+  },
+  setOTPRecords: (records: OTPRecord[]) => {
+    localStorage.setItem(STORAGE_KEYS.OTP_RECORDS, JSON.stringify(records));
   },
 };
 
@@ -710,12 +728,10 @@ export const mockService = {
     let coupons = db.getCoupons();
     
     if (options.clearCoupons) {
-      // Deletes all coupons issued by this merchant
       coupons = coupons.filter(c => c.originBusinessId !== id);
     }
 
     if (options.resetRedemptions) {
-      // Clears all redemption records that happened AT this merchant's shop
       coupons = coupons.map(c => ({
         ...c,
         redemptions: c.redemptions.filter(r => r.businessId !== id)
@@ -724,5 +740,152 @@ export const mockService = {
 
     db.setCoupons(coupons);
     return true;
-  }
+  },
+
+  getSuperAdminConfig: async () => db.getSuperAdminConfig(),
+  setSuperAdminConfig: async (config: SuperAdminConfig) => db.setSuperAdminConfig(config),
+
+  verifySuperAdmin: async (email: string, password: string): Promise<boolean> => {
+    const config = db.getSuperAdminConfig();
+    return config.email === email && config.password === password;
+  },
+
+  verifyBusinessOwner: async (businessId: string, password: string): Promise<boolean> => {
+    const biz = db.getBusinesses().find(b => b.id === businessId);
+    if (!biz) return false;
+    const storedPassword = biz.ownerPassword || '1234';
+    return storedPassword === password;
+  },
+
+  updateBusinessOwnerPassword: async (businessId: string, newPassword: string) => {
+    const businesses = db.getBusinesses();
+    const idx = businesses.findIndex(b => b.id === businessId);
+    if (idx !== -1) {
+      businesses[idx].ownerPassword = newPassword;
+      db.setBusinesses(businesses);
+    }
+  },
+
+  generateOTP: (): string => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  },
+
+  storeOTP: (record: OTPRecord) => {
+    const records = db.getOTPRecords().filter(r => !(r.email === record.email && r.role === record.role));
+    records.push(record);
+    db.setOTPRecords(records);
+  },
+
+  verifyOTP: (email: string, role: string, otp: string): boolean => {
+    const records = db.getOTPRecords();
+    const record = records.find(r => r.email === email && r.role === role && r.expiresAt > Date.now());
+    return !!(record && record.otp === otp);
+  },
+
+  clearOTP: (email: string, role: string) => {
+    const records = db.getOTPRecords().filter(r => !(r.email === email && r.role === role));
+    db.setOTPRecords(records);
+  },
+
+  getRecoveryEmail: async (role: string, identifier: string, merchantName?: string): Promise<string | null> => {
+    if (role === UserRole.SUPER_ADMIN) {
+      return db.getSuperAdminConfig().email;
+    }
+    if (role === UserRole.BUSINESS_OWNER) {
+      const biz = db.getBusinesses().find(b => b.id === identifier);
+      return biz?.email || null;
+    }
+    if (role === UserRole.SUB_ADMIN) {
+      const admin = db.getSubAdmins().find(a => a.email === identifier);
+      return admin?.email || null;
+    }
+    if (role === UserRole.SUB_MERCHANT) {
+      const biz = db.getBusinesses().find(b =>
+        b.name.toLowerCase() === (merchantName || '').toLowerCase().trim() &&
+        b.subMerchantEmail === identifier
+      );
+      return biz?.subMerchantEmail || null;
+    }
+    return null;
+  },
+
+  resetPasswordByOTP: async (email: string, role: string, otp: string, newPassword: string, businessId?: string): Promise<boolean> => {
+    const valid = mockService.verifyOTP(email, role, otp);
+    if (!valid) return false;
+
+    if (role === UserRole.SUPER_ADMIN) {
+      const config = db.getSuperAdminConfig();
+      db.setSuperAdminConfig({ ...config, password: newPassword });
+    } else if (role === UserRole.BUSINESS_OWNER && businessId) {
+      const businesses = db.getBusinesses();
+      const idx = businesses.findIndex(b => b.id === businessId);
+      if (idx !== -1) {
+        businesses[idx].ownerPassword = newPassword;
+        db.setBusinesses(businesses);
+      }
+    } else if (role === UserRole.SUB_ADMIN) {
+      const admins = db.getSubAdmins();
+      const idx = admins.findIndex(a => a.email === email);
+      if (idx !== -1) {
+        admins[idx].password = newPassword;
+        db.setSubAdmins(admins);
+      }
+    } else if (role === UserRole.SUB_MERCHANT) {
+      const businesses = db.getBusinesses();
+      const idx = businesses.findIndex(b => b.subMerchantEmail === email);
+      if (idx !== -1) {
+        businesses[idx].subMerchantPassword = newPassword;
+        db.setBusinesses(businesses);
+      }
+    }
+
+    const remaining = db.getOTPRecords().filter(r => !(r.email === email && r.role === role));
+    db.setOTPRecords(remaining);
+    return true;
+  },
+
+  getEmailServiceStatus: async (): Promise<{ configured: boolean; email: string | null }> => {
+    try {
+      const res = await fetch('/api/email-status');
+      const data = await res.json();
+      return data;
+    } catch {
+      return { configured: false, email: null };
+    }
+  },
+
+  sendRecoveryEmail: async (to: string, otp: string, userName: string): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/send-recovery-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to,
+          subject: 'ClusterGrowth - Password Recovery OTP',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 32px; background: #f8fafc; border-radius: 12px;">
+              <div style="background: #4f46e5; padding: 24px; border-radius: 8px; text-align: center; margin-bottom: 24px;">
+                <h1 style="color: white; margin: 0; font-size: 22px;">ClusterGrowth</h1>
+                <p style="color: #c7d2fe; margin: 4px 0 0; font-size: 13px;">Business Networking Platform</p>
+              </div>
+              <p style="color: #334155; font-size: 15px;">Hello <strong>${userName}</strong>,</p>
+              <p style="color: #334155; font-size: 14px;">You requested a password reset. Use the OTP below to verify your identity:</p>
+              <div style="background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 24px; text-align: center; margin: 24px 0;">
+                <p style="color: #94a3b8; font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 2px;">Your OTP</p>
+                <p style="color: #4f46e5; font-size: 40px; font-weight: 900; margin: 0; letter-spacing: 8px;">${otp}</p>
+                <p style="color: #94a3b8; font-size: 12px; margin: 8px 0 0;">Valid for 10 minutes</p>
+              </div>
+              <p style="color: #64748b; font-size: 13px;">If you did not request this, please ignore this email and your password will remain unchanged.</p>
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+              <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 0;">ClusterGrowth — Built for Business Networks</p>
+            </div>
+          `,
+        }),
+      });
+      const data = await res.json();
+      return data.success === true;
+    } catch {
+      return false;
+    }
+  },
 };

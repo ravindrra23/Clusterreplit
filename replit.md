@@ -4,13 +4,21 @@ A cross-business customer sharing and growth platform allowing local businesses 
 
 ## Architecture
 
-- **Frontend only** — React + TypeScript + Vite at port 5000
+- **Frontend** — React + TypeScript + Vite at port 5000
+- **Email Server** — Minimal Express server at port 3001 (Gmail SMTP via Nodemailer)
 - **Routing** — React Router DOM v7 with HashRouter for SPA navigation
-- **Auth** — Custom AuthContext with 4 user roles (no backend auth)
+- **Auth** — Custom AuthContext with 4 user roles, all password-protected
 - **Data** — mockService using localStorage for full persistence
 - **Styling** — Tailwind CSS v3 + tailwindcss-animate (PostCSS build)
 - **PDF** — jsPDF for bulk coupon PDF generation and printing
 - **Charts** — recharts for analytics visualizations
+
+## Development Workflow
+
+```
+npx tsx server/emailServer.ts &   (port 3001, email API)
+npx vite --config vite.replit.config.ts  (port 5000, frontend with /api proxy)
+```
 
 ## Entry Point Chain
 
@@ -24,10 +32,31 @@ The `@/` alias maps to `./client/src/` (configured in both vite.config.ts and ts
 
 | Role | Mode | Description |
 |------|------|-------------|
-| `SUPER_ADMIN` | SUPER | Full platform access, one-click login |
+| `SUPER_ADMIN` | SUPER | Email + password (default: admin@clustergrowth.com / admin@123) |
 | `SUB_ADMIN` | STAFF | Email + password, permission-based access |
-| `BUSINESS_OWNER` | MERCHANT | Select business from dropdown |
+| `BUSINESS_OWNER` | MERCHANT | Select business + password (default: 1234) |
 | `SUB_MERCHANT` | COUNTER | Merchant name + email + password (staff at counter) |
+
+## Password Recovery System
+
+All 4 roles support forgot-password via email OTP:
+1. User clicks "Forgot Password" on Login screen
+2. App generates 6-digit OTP (10-min expiry) stored in localStorage
+3. OTP sent to registered email via SMTP (Gmail)
+4. User enters OTP → sets new password
+5. New password saved back to localStorage
+
+### Email Configuration (Required for OTP)
+Set these in Replit environment secrets:
+- `SMTP_EMAIL` — Gmail address that sends recovery emails
+- `SMTP_APP_PASSWORD` — Gmail App Password (16-char, from Google Account security)
+
+## Admin Security Features
+
+- **Super Admin Credentials** — Manageable from Admin Settings page (email + password)
+- **Sub-Admin Management** — Create/edit/delete with email + password
+- **Business Owner PIN** — Default password `1234`, set per-business by admin
+- **Sub-Merchant** — Email + password set in business Settings page
 
 ## Page Structure
 
@@ -45,7 +74,7 @@ The `@/` alias maps to `./client/src/` (configured in both vite.config.ts and ts
 - `/admin/businesses` — Register/edit/delete businesses, toggle bulk access, unlock issue lock
 - `/admin/reports` — Platform-wide coupon and revenue reports
 - `/admin/activity` — Cross-business activity log with PDF export
-- `/admin/settings` — Sub-admin management (SUPER_ADMIN only)
+- `/admin/settings` — Sub-admin management + Super Admin credentials (SUPER_ADMIN only)
 
 ## Key Business Logic (in mockService.ts)
 
@@ -66,3 +95,12 @@ The `@/` alias maps to `./client/src/` (configured in both vite.config.ts and ts
 - `jspdf` — PDF generation
 - `tailwindcss`, `autoprefixer`, `postcss` — CSS build
 - `tailwindcss-animate` — animations (animate-in, fade-in, slide-in, zoom-in)
+- `express`, `cors` — email API server
+- `nodemailer` — Gmail SMTP email sending
+- `tsx` — TypeScript execution for email server
+
+## Production Deployment
+
+- `npm run build` — Builds Vite frontend to `dist/` (preserves `dist/index.cjs`)
+- `node ./dist/index.cjs` — Production server (email API + serves static files)
+- `SMTP_EMAIL` and `SMTP_APP_PASSWORD` env vars must be set for email to work

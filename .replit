@@ -11,6 +11,10 @@ localPort = 3000
 externalPort = 3000
 
 [[ports]]
+localPort = 3001
+externalPort = 3001
+
+[[ports]]
 localPort = 5000
 externalPort = 80
 
@@ -43,7 +47,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx vite --config vite.replit.config.ts"
+args = "npx tsx server/emailServer.ts & npx vite --config vite.replit.config.ts"
 waitForPort = 5000
 
 [agent]
