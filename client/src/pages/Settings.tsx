@@ -21,6 +21,7 @@ const Settings: React.FC = () => {
   const [ownerName, setOwnerName] = useState('');
   const [ownerAddress, setOwnerAddress] = useState('');
   const [profilePhotoUrl, setProfilePhotoUrl] = useState('');
+  const [recoveryEmail, setRecoveryEmail] = useState('');
   
   // Sub-Merchant State
   const [smEmail, setSmEmail] = useState('');
@@ -66,6 +67,7 @@ const Settings: React.FC = () => {
           setOwnerName(b.ownerName);
           setOwnerAddress(b.ownerAddress || '');
           setProfilePhotoUrl(b.profilePhotoUrl || '');
+          setRecoveryEmail(b.email || '');
           
           setSmEmail(b.subMerchantEmail || '');
           setSmPassword(b.subMerchantPassword || '');
@@ -149,7 +151,8 @@ const Settings: React.FC = () => {
     await mockService.updateBusinessProfile(business.id, {
        ownerName,
        ownerAddress,
-       profilePhotoUrl
+       profilePhotoUrl,
+       email: recoveryEmail
     });
     
     updateUser({ name: ownerName, profilePhotoUrl });
@@ -573,6 +576,22 @@ const Settings: React.FC = () => {
                     onChange={(e) => setOwnerName(e.target.value)}
                     className="block w-full border border-slate-300 rounded-lg p-2.5 focus:ring-indigo-500 focus:border-indigo-500"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Recovery Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input
+                      type="email"
+                      value={recoveryEmail}
+                      onChange={(e) => setRecoveryEmail(e.target.value)}
+                      className="block w-full pl-10 border border-slate-300 rounded-lg p-2.5 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="your@email.com"
+                      data-testid="input-recovery-email"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">* This email will be used for password recovery via OTP.</p>
                 </div>
 
                 <div>

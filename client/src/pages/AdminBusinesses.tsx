@@ -5,7 +5,7 @@ import { Business, Cluster, UserRole } from '@/types/types';
 import { useAuth } from '@/context/AuthContext';
 import { 
   Store, Search, Filter, MoreHorizontal, Trash2, Eye, 
-  MapPin, ToggleRight, ToggleLeft, User, ShieldCheck, X, AlertTriangle, Plus, Smartphone, Calendar, Home, Phone, RotateCcw, Check, Edit, Unlock, Ticket
+  MapPin, ToggleRight, ToggleLeft, User, ShieldCheck, X, AlertTriangle, Plus, Smartphone, Calendar, Home, Phone, RotateCcw, Check, Edit, Unlock, Ticket, Mail
 } from 'lucide-react';
 
 const AdminBusinesses: React.FC = () => {
@@ -35,10 +35,11 @@ const AdminBusinesses: React.FC = () => {
     ownerName: '',
     ownerAddress: '',
     phone: '',
+    email: '',
     clusterId: '',
     category: 'Restaurant',
     expiryDate: '',
-    maxCouponsPerBatch: 100 // New: Default
+    maxCouponsPerBatch: 100
   });
 
   const menuRef = useRef<HTMLDivElement>(null);
@@ -111,6 +112,7 @@ const AdminBusinesses: React.FC = () => {
       ownerName: biz.ownerName,
       ownerAddress: biz.ownerAddress || '',
       phone: biz.phone || '',
+      email: biz.email || '',
       clusterId: biz.clusterId,
       category: biz.category,
       expiryDate: new Date(biz.expiryDate).toISOString().split('T')[0],
@@ -145,6 +147,7 @@ const AdminBusinesses: React.FC = () => {
         ownerName: '',
         ownerAddress: '',
         phone: '',
+        email: '',
         clusterId: clusters[0]?.id || '',
         category: 'Restaurant',
         expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -284,6 +287,15 @@ const AdminBusinesses: React.FC = () => {
                     <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input type="tel" required value={regForm.phone} onChange={e => setRegForm({...regForm, phone: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 outline-none font-bold text-sm" placeholder="10-digit mobile number" />
                   </div>
+               </div>
+
+               <div className="space-y-1.5">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Recovery Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input type="email" value={regForm.email} onChange={e => setRegForm({...regForm, email: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 outline-none font-bold text-sm" placeholder="owner@business.com" data-testid="input-merchant-email" />
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium ml-1">Used for password recovery. Merchant can also update this.</p>
                </div>
 
                <div className="space-y-1.5">
