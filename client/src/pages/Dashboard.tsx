@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { mockService } from '@/services/mockService';
 import { Stats, Coupon, Notification } from '@/types/types';
-import StatCard from '../components/StatCard';
+import StatCard from '@/components/StatCard';
 import { Ticket, Users, IndianRupee, ExternalLink, X, Calendar, MapPin, Megaphone, Bell, Zap, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
