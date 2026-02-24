@@ -2,7 +2,7 @@
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { UserRole } from './types/types';
+import { UserRole } from './types';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import IssueCoupon from './pages/IssueCoupon';
