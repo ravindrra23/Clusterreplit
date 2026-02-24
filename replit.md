@@ -1,74 +1,68 @@
 # ClusterGrowth SaaS
 
-A cross-business customer sharing and growth platform for local businesses to generate and redeem cluster-wide coupons.
+A cross-business customer sharing and growth platform allowing local businesses to generate and redeem cluster-wide coupons.
 
 ## Architecture
 
-- **Frontend**: React + TypeScript + Vite, served at port 5000
-- **Routing**: React Router DOM (HashRouter) for SPA navigation
-- **State**: React Context API (AuthContext) for authentication
-- **Data**: mockService (client-side mock data service)
-- **Styling**: Tailwind CSS (CDN via index.html)
-- **PDF**: jsPDF for coupon PDF generation
-- **Charts**: recharts for analytics visualizations
+- **Frontend only** — React + TypeScript + Vite at port 5000
+- **Routing** — React Router DOM v7 with HashRouter for SPA navigation
+- **Auth** — Custom AuthContext with 4 user roles (no backend auth)
+- **Data** — mockService using localStorage for full persistence
+- **Styling** — Tailwind CSS v3 + tailwindcss-animate (PostCSS build)
+- **PDF** — jsPDF for bulk coupon PDF generation and printing
+- **Charts** — recharts for analytics visualizations
 
-## File Structure
+## Entry Point Chain
 
 ```
-client/src/
-  App.tsx              - Root component with HashRouter + ProtectedRoute logic
-  main.tsx             - Entry point
-  types/types.ts       - All shared TypeScript types and enums
-  context/
-    AuthContext.tsx    - Authentication context and login logic
-  pages/
-    Login.tsx          - Login page with 4 role modes
-    Dashboard.tsx      - Business owner dashboard
-    IssueCoupon.tsx    - Coupon issuance page
-    RedeemCoupon.tsx   - Coupon redemption page
-    Settings.tsx       - Business settings
-    Analytics.tsx      - Business analytics/reports
-    ActivityLog.tsx    - Business activity log
-    AdminDashboard.tsx - Super/Sub admin dashboard
-    AdminClusters.tsx  - Cluster management
-    AdminBusinesses.tsx- Business management
-    AdminReports.tsx   - Admin reports
-    AdminActivityLog.tsx - Admin activity log
-    AdminSettings.tsx  - Admin settings (Super Admin only)
-  components/
-    Layout.tsx         - Main layout with sidebar navigation
-    StatCard.tsx       - Reusable stats card component
-  services/
-    mockService.ts     - Client-side mock data service (localStorage-backed)
-index.html             - HTML entry point with Tailwind CDN
-vite.config.ts         - Vite config with @ alias pointing to client/src
+index.html → /client/src/main.tsx → @/App.tsx
 ```
 
-## User Roles
+The `@/` alias maps to `./client/src/` (configured in both vite.config.ts and tsconfig.json).
 
-- **SUPER_ADMIN** - Full platform access, can manage all clusters/businesses/admins
-- **SUB_ADMIN** - Limited admin with permission-based access
-- **BUSINESS_OWNER** - Can issue/redeem coupons, view reports, manage settings
-- **SUB_MERCHANT** - Counter staff, can only redeem coupons
+## User Roles & Login Modes
 
-## Key Features
+| Role | Mode | Description |
+|------|------|-------------|
+| `SUPER_ADMIN` | SUPER | Full platform access, one-click login |
+| `SUB_ADMIN` | STAFF | Email + password, permission-based access |
+| `BUSINESS_OWNER` | MERCHANT | Select business from dropdown |
+| `SUB_MERCHANT` | COUNTER | Merchant name + email + password (staff at counter) |
 
-- Role-based routing and access control
-- Cluster-wide coupon issuance (bulk and single)
-- Cross-business coupon redemption with discount rules
-- Business subscription management with expiry dates
-- PDF coupon generation and download
-- Analytics and activity logging
-- Sub-admin and sub-merchant account management
+## Page Structure
 
-## Dependencies
+### Business Owner Pages
+- `/dashboard` — Stats, recent activity, cluster live coupons, broadcast notifications
+- `/issue` — Bulk coupon generation (with 40-day lock), recent activity log
+- `/redeem` — Coupon code verification and redemption with bill amount
+- `/settings` — Profile, discount rules, sub-merchant credentials, lucky draw, email integration
+- `/reports` — Analytics with charts (coupons issued vs redeemed)
+- `/activity` — Activity log with coupon history
 
-- react, react-dom (v19)
-- react-router-dom (v7)
-- lucide-react (icons)
-- recharts (charts)
-- jspdf (PDF generation)
+### Admin Pages
+- `/admin` — Dashboard with stats, broadcast tool, quick links
+- `/admin/clusters` — Create/edit/delete clusters, view business list, detail panel
+- `/admin/businesses` — Register/edit/delete businesses, toggle bulk access, unlock issue lock
+- `/admin/reports` — Platform-wide coupon and revenue reports
+- `/admin/activity` — Cross-business activity log with PDF export
+- `/admin/settings` — Sub-admin management (SUPER_ADMIN only)
 
-## Running
+## Key Business Logic (in mockService.ts)
 
-The "Start application" workflow runs `npm run dev` which starts the Vite dev server on port 5000.
+- **Clusters** — Group of businesses that share a coupon ecosystem
+- **Bulk Coupons** — Business can issue to entire cluster; 40-day reissue lock enforced
+- **Single Coupons** — Issued to individual customers with phone/email
+- **Redemption** — Any business in cluster can redeem; discount rule applied from origin biz
+- **Lucky Draw** — Optional gift attached to coupon, shown on redemption
+- **Sub-Merchant** — Counter staff who can only redeem (set in Settings)
+- **Sub-Admin** — Platform staff with granular permission flags
+
+## Installed Packages
+
+- `react`, `react-dom` (v19)
+- `react-router-dom` (v7)
+- `lucide-react` — icons
+- `recharts` — charts
+- `jspdf` — PDF generation
+- `tailwindcss`, `autoprefixer`, `postcss` — CSS build
+- `tailwindcss-animate` — animations (animate-in, fade-in, slide-in, zoom-in)
