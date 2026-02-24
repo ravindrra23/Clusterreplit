@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.2.1",
     "autoprefixer": "^10.4.24",
     "jspdf": "^2.5.2",
     "lucide-react": "^0.563.0",
@@ -17,7 +18,7 @@
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.1",
     "recharts": "^3.7.0",
-    "tailwindcss": "^4.2.1",
+    "tailwindcss": "^3.4.19",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
