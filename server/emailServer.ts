@@ -16,8 +16,8 @@ app.post('/api/send-recovery-email', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Missing required fields: to, subject, html' });
   }
 
-  const smtpEmail = process.env.SMTP_EMAIL;
-  const smtpPassword = process.env.SMTP_APP_PASSWORD;
+  const smtpEmail = process.env.SMTP_EMAIL?.trim();
+  const smtpPassword = process.env.SMTP_APP_PASSWORD?.replace(/\s/g, '').trim();
 
   if (!smtpEmail || !smtpPassword) {
     return res.status(503).json({
@@ -68,5 +68,7 @@ if (isProduction) {
 }
 
 app.listen(PORT, '0.0.0.0', () => {
+  const pw = process.env.SMTP_APP_PASSWORD?.replace(/\s/g, '').trim();
   console.log(`[EmailServer] Running on port ${PORT} (${isProduction ? 'production' : 'development'})`);
+  console.log(`[EmailServer] SMTP configured: email=${process.env.SMTP_EMAIL}, password length=${pw?.length || 0}`);
 });
