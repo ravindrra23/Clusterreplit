@@ -68,7 +68,5 @@ if (isProduction) {
 }
 
 app.listen(PORT, '0.0.0.0', () => {
-  const pw = process.env.SMTP_APP_PASSWORD?.replace(/\s/g, '').trim();
   console.log(`[EmailServer] Running on port ${PORT} (${isProduction ? 'production' : 'development'})`);
-  console.log(`[EmailServer] SMTP configured: email=${process.env.SMTP_EMAIL}, password length=${pw?.length || 0}`);
 });

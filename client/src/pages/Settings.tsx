@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { mockService } from '@/services/mockService';
 import { Business, DiscountRule, LuckyGift } from '@/types/types';
-import { Save, User, Image as ImageIcon, Camera, Ticket, Mail, Link, CheckCircle, Trash2, Lock, AlertCircle, Unlock, Home, Gift, Hash, Plus, X, Eye, EyeOff, Smartphone } from 'lucide-react';
+import { Save, User, Image as ImageIcon, Camera, Ticket, Mail, Link, CheckCircle, Trash2, Lock, AlertCircle, Unlock, Home, Gift, Hash, Plus, X, Eye, EyeOff, Smartphone, Key } from 'lucide-react';
 
 const PRESET_AVATARS = [
   'https://images.unsplash.com/photo-1556910103-1c02745a30bf?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80',
@@ -593,6 +593,23 @@ const Settings: React.FC = () => {
                   </div>
                   <p className="text-[10px] text-slate-400 mt-1">* This email will be used for password recovery via OTP.</p>
                 </div>
+
+                {business?.loginId && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Login ID</label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input
+                      type="text"
+                      value={business.loginId}
+                      readOnly
+                      className="block w-full pl-10 border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-slate-600 font-medium cursor-not-allowed"
+                      data-testid="display-login-id"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">* Set by admin. Contact admin to change.</p>
+                </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Business Address</label>

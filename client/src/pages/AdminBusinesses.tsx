@@ -5,7 +5,7 @@ import { Business, Cluster, UserRole } from '@/types/types';
 import { useAuth } from '@/context/AuthContext';
 import { 
   Store, Search, Filter, MoreHorizontal, Trash2, Eye, 
-  MapPin, ToggleRight, ToggleLeft, User, ShieldCheck, X, AlertTriangle, Plus, Smartphone, Calendar, Home, Phone, RotateCcw, Check, Edit, Unlock, Ticket, Mail
+  MapPin, ToggleRight, ToggleLeft, User, ShieldCheck, X, AlertTriangle, Plus, Smartphone, Calendar, Home, Phone, RotateCcw, Check, Edit, Unlock, Ticket, Mail, Key, Lock
 } from 'lucide-react';
 
 const AdminBusinesses: React.FC = () => {
@@ -36,6 +36,8 @@ const AdminBusinesses: React.FC = () => {
     ownerAddress: '',
     phone: '',
     email: '',
+    loginId: '',
+    ownerPassword: '',
     clusterId: '',
     category: 'Restaurant',
     expiryDate: '',
@@ -113,6 +115,8 @@ const AdminBusinesses: React.FC = () => {
       ownerAddress: biz.ownerAddress || '',
       phone: biz.phone || '',
       email: biz.email || '',
+      loginId: biz.loginId || '',
+      ownerPassword: biz.ownerPassword || '',
       clusterId: biz.clusterId,
       category: biz.category,
       expiryDate: new Date(biz.expiryDate).toISOString().split('T')[0],
@@ -127,17 +131,23 @@ const AdminBusinesses: React.FC = () => {
     setRegLoading(true);
     try {
       if (editingBusiness) {
-        // Update Existing Business
-        await mockService.updateBusinessProfile(editingBusiness.id, {
+        const updateData: any = {
           ...regForm,
           expiryDate: new Date(regForm.expiryDate).toISOString()
-        });
+        };
+        if (!updateData.ownerPassword) {
+          delete updateData.ownerPassword;
+        }
+        await mockService.updateBusinessProfile(editingBusiness.id, updateData);
       } else {
-        // Create New Business
-        await mockService.addBusiness({
+        const createData: any = {
           ...regForm,
           expiryDate: new Date(regForm.expiryDate).toISOString()
-        });
+        };
+        if (!createData.ownerPassword) {
+          createData.ownerPassword = '1234';
+        }
+        await mockService.addBusiness(createData);
       }
       
       setIsRegModalOpen(false);
@@ -148,6 +158,8 @@ const AdminBusinesses: React.FC = () => {
         ownerAddress: '',
         phone: '',
         email: '',
+        loginId: '',
+        ownerPassword: '',
         clusterId: clusters[0]?.id || '',
         category: 'Restaurant',
         expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -299,6 +311,24 @@ const AdminBusinesses: React.FC = () => {
                </div>
 
                <div className="space-y-1.5">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Login ID</label>
+                  <div className="relative">
+                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input type="text" value={regForm.loginId} onChange={e => setRegForm({...regForm, loginId: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 outline-none font-bold text-sm" placeholder="e.g. merchant001" data-testid="input-merchant-login-id" />
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium ml-1">Unique login identifier for this merchant.</p>
+               </div>
+
+               <div className="space-y-1.5">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Login Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input type="text" value={regForm.ownerPassword} onChange={e => setRegForm({...regForm, ownerPassword: e.target.value})} className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 outline-none font-bold text-sm" placeholder={editingBusiness ? "Leave blank to keep current" : "Default: 1234"} data-testid="input-merchant-password" />
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-medium ml-1">{editingBusiness ? "Leave blank to keep current password." : "If empty, default password '1234' will be used."}</p>
+               </div>
+
+               <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Assigned Cluster</label>
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -416,6 +446,11 @@ const AdminBusinesses: React.FC = () => {
                            <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-tight flex items-center">
                               <User size={12} className="mr-1" /> {business.ownerName}
                            </p>
+                           {business.loginId && (
+                             <p className="text-[10px] text-indigo-500 font-bold mt-0.5 flex items-center">
+                               <Key size={10} className="mr-1" /> {business.loginId}
+                             </p>
+                           )}
                         </div>
                      </div>
                   </td>

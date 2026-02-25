@@ -70,6 +70,7 @@ export interface Business {
   email: string;
   phone?: string; 
   profilePhotoUrl?: string; 
+  loginId?: string;
   ownerPassword?: string;
   discountRule: DiscountRule;
   subscriptionStatus: 'ACTIVE' | 'PAST_DUE' | 'CANCELLED';

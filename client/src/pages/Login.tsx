@@ -522,7 +522,7 @@ const Login: React.FC = () => {
                         className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-900 text-sm font-bold rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600 block p-4 pr-10 transition-all outline-none"
                       >
                         {businesses.map((b) => (
-                          <option key={b.id} value={b.id}>{b.name}</option>
+                          <option key={b.id} value={b.id}>{b.name}{b.loginId ? ` (${b.loginId})` : ''}</option>
                         ))}
                       </select>
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
