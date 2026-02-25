@@ -23,6 +23,15 @@ const Settings: React.FC = () => {
   const [profilePhotoUrl, setProfilePhotoUrl] = useState('');
   const [recoveryEmail, setRecoveryEmail] = useState('');
   
+  // Change Password State
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   // Sub-Merchant State
   const [smEmail, setSmEmail] = useState('');
   const [smPassword, setSmPassword] = useState('');
@@ -157,6 +166,35 @@ const Settings: React.FC = () => {
     
     updateUser({ name: ownerName, profilePhotoUrl });
     setTimeout(() => setSavingProfile(false), 800);
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!business) return;
+    setPasswordMsg(null);
+
+    const storedPassword = business.ownerPassword || '1234';
+    if (currentPassword !== storedPassword) {
+      setPasswordMsg({ type: 'error', text: 'Current password is incorrect.' });
+      return;
+    }
+    if (newPassword.length < 4) {
+      setPasswordMsg({ type: 'error', text: 'New password must be at least 4 characters.' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMsg({ type: 'error', text: 'New password and confirm password do not match.' });
+      return;
+    }
+
+    setSavingPassword(true);
+    await mockService.updateBusinessOwnerPassword(business.id, newPassword);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordMsg({ type: 'success', text: 'Password changed successfully!' });
+    if (user?.businessId) refreshBusinessData(user.businessId);
+    setTimeout(() => setSavingPassword(false), 800);
   };
 
   const handleConnectEmail = async () => {
@@ -647,6 +685,86 @@ const Settings: React.FC = () => {
                   </button>
                 </div>
              </div>
+          </div>
+        </form>
+      </div>
+
+      <div className="bg-white shadow-md rounded-xl border border-slate-100">
+        <div className="p-6 border-b border-slate-100 flex items-center space-x-3">
+          <Lock size={22} className="text-slate-600" />
+          <h2 className="text-lg font-bold text-slate-800">Change Password</h2>
+        </div>
+        
+        <form onSubmit={handleChangePassword} className="p-6 space-y-4 max-w-md">
+          {passwordMsg && (
+            <div className={`p-3 rounded-lg text-sm font-medium ${passwordMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+              {passwordMsg.text}
+            </div>
+          )}
+          
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Current Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type={showCurrentPass ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => { setCurrentPassword(e.target.value); setPasswordMsg(null); }}
+                className="block w-full pl-10 pr-10 border border-slate-300 rounded-lg p-2.5 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Enter current password"
+                required
+                data-testid="input-current-password"
+              />
+              <button type="button" onClick={() => setShowCurrentPass(!showCurrentPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600">
+                {showCurrentPass ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">New Password</label>
+            <div className="relative">
+              <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type={showNewPass ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => { setNewPassword(e.target.value); setPasswordMsg(null); }}
+                className="block w-full pl-10 pr-10 border border-slate-300 rounded-lg p-2.5 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Enter new password"
+                required
+                data-testid="input-new-password"
+              />
+              <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600">
+                {showNewPass ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Confirm New Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => { setConfirmPassword(e.target.value); setPasswordMsg(null); }}
+                className="block w-full pl-10 border border-slate-300 rounded-lg p-2.5 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Re-enter new password"
+                required
+                data-testid="input-confirm-password"
+              />
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={savingPassword}
+              className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-indigo-700 transition-all flex items-center space-x-2 shadow-md active:scale-95"
+            >
+              <Save size={18} />
+              <span>{savingPassword ? 'Changing...' : 'Change Password'}</span>
+            </button>
           </div>
         </form>
       </div>

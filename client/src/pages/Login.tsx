@@ -232,7 +232,7 @@ const Login: React.FC = () => {
     setTimeout(async () => {
       const success = await login(UserRole.BUSINESS_OWNER, selectedBusinessId, merchantPassword);
       if (!success) {
-        setLoginError("Incorrect password. Default password is '1234'. Contact admin if needed.");
+        setLoginError("Incorrect password. Please try again or use Forgot Password.");
         setIsLoggingIn(false);
       }
     }, 600);
