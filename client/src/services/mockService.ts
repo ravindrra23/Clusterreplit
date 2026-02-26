@@ -1,6 +1,46 @@
 
 import { Business, BusinessCategory, Cluster, Coupon, DiscountRule, Stats, UserRole, Notification, RedemptionRecord, SubAdminPermissions, SubAdminUser, LuckyGift, SuperAdminConfig, OTPRecord } from '@/types/types';
 
+const authApi = async (endpoint: string, body?: any): Promise<any> => {
+  try {
+    const opts: RequestInit = body
+      ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+      : { method: 'GET' };
+    const res = await fetch(`/api/auth/${endpoint}`, opts);
+    if (!res.ok) return { success: false };
+    return await res.json();
+  } catch (err) {
+    console.error(`[authApi] ${endpoint} failed:`, err);
+    return { success: false };
+  }
+};
+
+const syncBusinessToServer = async (biz: Business) => {
+  await authApi('sync-business', {
+    id: biz.id,
+    loginId: biz.loginId,
+    ownerPassword: biz.ownerPassword || '1234',
+    name: biz.name,
+    data: biz,
+  });
+};
+
+const syncAllBusinessesToServer = async (businesses: Business[]) => {
+  await authApi('sync-all-businesses', { businesses });
+};
+
+const syncClustersToServer = async (clusters: Cluster[]) => {
+  await authApi('sync-clusters', { clusters });
+};
+
+const syncSubAdminsToServer = async (subAdmins: SubAdminUser[]) => {
+  await authApi('sync-sub-admins', { subAdmins });
+};
+
+const syncAdminConfigToServer = async (config: SuperAdminConfig) => {
+  await authApi('sync-admin-config', config);
+};
+
 const STORAGE_KEYS = {
   CLUSTERS: 'cg_clusters_data_v1',
   BUSINESSES: 'cg_businesses_data_v1',
@@ -65,9 +105,9 @@ const db = {
     if (_cache[STORAGE_KEYS.BUSINESSES]) return _cache[STORAGE_KEYS.BUSINESSES];
     const data = localStorage.getItem(STORAGE_KEYS.BUSINESSES);
     const parsed = data ? JSON.parse(data) : [
-      { id: 'b1', name: 'Joe\'s Pizza', clusterId: 'c1', category: 'Restaurant', ownerName: 'Joe Doe', email: 'joe@pizza.com', phone: '9876543210', subscriptionStatus: 'ACTIVE', expiryDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString(), discountRule: DEFAULT_DISCOUNT, isBulkEnabled: true, isSingleEnabled: true, maxCouponsPerBatch: 100 },
-      { id: 'b2', name: 'Beauty Hub', clusterId: 'c1', category: 'Salon', ownerName: 'Jane Smith', email: 'jane@beauty.com', phone: '9876543211', subscriptionStatus: 'ACTIVE', expiryDate: '2025-12-31', discountRule: { ...DEFAULT_DISCOUNT, value: 20, description: '20% Off' }, isBulkEnabled: true, isSingleEnabled: true, maxCouponsPerBatch: 100 },
-      { id: 'b3', name: 'Fitness Zone', clusterId: 'c1', category: 'Gym', ownerName: 'Mike Ross', email: 'mike@fit.com', phone: '9876543212', subscriptionStatus: 'ACTIVE', expiryDate: '2025-12-31', discountRule: { value: 100, type: 'FLAT', minPurchase: 1000, description: 'Rs. 100 Off' }, isBulkEnabled: true, isSingleEnabled: true, maxCouponsPerBatch: 100 }
+      { id: 'b1', name: 'Joe\'s Pizza', clusterId: 'c1', category: 'Restaurant', ownerName: 'Joe Doe', email: 'joe@pizza.com', phone: '9876543210', loginId: 'joespizza', ownerPassword: '1234', subscriptionStatus: 'ACTIVE', expiryDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString(), discountRule: DEFAULT_DISCOUNT, isBulkEnabled: true, isSingleEnabled: true, maxCouponsPerBatch: 100 },
+      { id: 'b2', name: 'Beauty Hub', clusterId: 'c1', category: 'Salon', ownerName: 'Jane Smith', email: 'jane@beauty.com', phone: '9876543211', loginId: 'beautyhub', ownerPassword: '1234', subscriptionStatus: 'ACTIVE', expiryDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString(), discountRule: { ...DEFAULT_DISCOUNT, value: 20, description: '20% Off' }, isBulkEnabled: true, isSingleEnabled: true, maxCouponsPerBatch: 100 },
+      { id: 'b3', name: 'Fitness Zone', clusterId: 'c1', category: 'Gym', ownerName: 'Mike Ross', email: 'mike@fit.com', phone: '9876543212', loginId: 'fitnesszone', ownerPassword: '1234', subscriptionStatus: 'ACTIVE', expiryDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString(), discountRule: { value: 100, type: 'FLAT', minPurchase: 1000, description: 'Rs. 100 Off' }, isBulkEnabled: true, isSingleEnabled: true, maxCouponsPerBatch: 100 }
     ];
     _cache[STORAGE_KEYS.BUSINESSES] = parsed;
     return parsed;
@@ -137,6 +177,64 @@ const db = {
   },
 };
 
+const syncInitialDataToServer = async () => {
+  try {
+    const businesses = db.getBusinesses();
+    if (businesses.length > 0) {
+      await syncAllBusinessesToServer(businesses);
+    }
+    const clusters = db.getRawClusters();
+    if (clusters.length > 0) {
+      await syncClustersToServer(clusters);
+    }
+    const subAdmins = db.getSubAdmins();
+    if (subAdmins.length > 0) {
+      await syncSubAdminsToServer(subAdmins);
+    }
+    const config = db.getSuperAdminConfig();
+    await syncAdminConfigToServer(config);
+  } catch (err) {
+    console.error('[syncInitialData] Failed:', err);
+  }
+};
+
+const hydrateFromServer = async () => {
+  try {
+    const [bizResult, clusterResult, adminResult] = await Promise.all([
+      authApi('get-all-businesses'),
+      authApi('get-all-clusters'),
+      authApi('get-admin-config'),
+    ]);
+    if (bizResult.success && bizResult.businesses && bizResult.businesses.length > 0) {
+      const localBiz = db.getBusinesses();
+      const serverIds = new Set(bizResult.businesses.map((b: any) => b.id));
+      const merged = [...bizResult.businesses];
+      for (const lb of localBiz) {
+        if (!serverIds.has(lb.id)) {
+          merged.push(lb);
+        }
+      }
+      db.setBusinesses(merged);
+    }
+    if (clusterResult.success && clusterResult.clusters && clusterResult.clusters.length > 0) {
+      const localClusters = db.getRawClusters();
+      const serverIds = new Set(clusterResult.clusters.map((c: any) => c.id));
+      const merged = [...clusterResult.clusters];
+      for (const lc of localClusters) {
+        if (!serverIds.has(lc.id)) {
+          merged.push(lc);
+        }
+      }
+      db.setClusters(merged);
+    }
+    if (adminResult.success && adminResult.config) {
+      db.setSuperAdminConfig(adminResult.config);
+    }
+  } catch (err) {
+    console.error('[hydrateFromServer] Failed:', err);
+  }
+};
+
 export const mockService = {
   getClusters: async () => db.getClusters(),
   getBusinessById: async (id: string) => db.getBusinesses().find(b => b.id === id),
@@ -179,6 +277,7 @@ export const mockService = {
     };
     clusters.push(newCluster);
     db.setClusters(clusters);
+    syncClustersToServer(clusters);
     return newCluster;
   },
 
@@ -188,6 +287,7 @@ export const mockService = {
     if (idx !== -1) {
       clusters[idx] = { ...clusters[idx], ...data };
       db.setClusters(clusters);
+      syncClustersToServer(clusters);
       return clusters[idx];
     }
     throw new Error("Cluster not found");
@@ -202,17 +302,20 @@ export const mockService = {
       isBulkEnabled: false,
       isSingleEnabled: true,
       email: `${data.name.replace(/\s+/g, '').toLowerCase()}@placeholder.com`,
-      maxCouponsPerBatch: data.maxCouponsPerBatch || 100, // New: Default limit
+      maxCouponsPerBatch: data.maxCouponsPerBatch || 100,
       ...data
     };
     businesses.push(newBusiness);
     db.setBusinesses(businesses);
+    await syncBusinessToServer(newBusiness);
+    syncClustersToServer(db.getRawClusters());
     return newBusiness;
   },
 
   deleteCluster: async (id: string) => {
     const clusters = db.getRawClusters().filter(c => c.id !== id);
     db.setClusters(clusters);
+    syncClustersToServer(clusters);
   },
 
   downloadClusterSpecificData: async (id: string) => {
@@ -232,6 +335,7 @@ export const mockService = {
     };
     admins.push(newAdmin);
     db.setSubAdmins(admins);
+    syncSubAdminsToServer(admins);
     return newAdmin;
   },
 
@@ -241,12 +345,14 @@ export const mockService = {
     if (idx !== -1) {
       admins[idx] = { ...admins[idx], ...data };
       db.setSubAdmins(admins);
+      syncSubAdminsToServer(admins);
     }
   },
 
   deleteSubAdmin: async (id: string) => {
     const admins = db.getSubAdmins().filter(a => a.id !== id);
     db.setSubAdmins(admins);
+    syncSubAdminsToServer(admins);
   },
 
   toggleBulkAccess: async (id: string, enabled: boolean) => {
@@ -255,6 +361,7 @@ export const mockService = {
     if (idx !== -1) {
       businesses[idx].isBulkEnabled = enabled;
       db.setBusinesses(businesses);
+      syncBusinessToServer(businesses[idx]);
     }
   },
 
@@ -264,6 +371,7 @@ export const mockService = {
     if (idx !== -1) {
       businesses[idx].isSingleEnabled = enabled;
       db.setBusinesses(businesses);
+      syncBusinessToServer(businesses[idx]);
     }
   },
 
@@ -659,13 +767,13 @@ export const mockService = {
       businesses[idx].lastDiscountUpdate = new Date().toISOString();
       if (luckyDraw) {
         businesses[idx].luckyGifts = luckyDraw.gifts;
-        // Keep legacy fields for backward compatibility if needed, using the first gift
         if (luckyDraw.gifts.length > 0) {
           businesses[idx].luckyGiftName = luckyDraw.gifts[0].name;
           businesses[idx].luckyGiftQuantity = luckyDraw.gifts[0].quantity;
         }
       }
       db.setBusinesses(businesses);
+      syncBusinessToServer(businesses[idx]);
     }
   },
   updateBusinessProfile: async (id: string, data: any) => {
@@ -674,6 +782,7 @@ export const mockService = {
     if (idx !== -1) {
       businesses[idx] = { ...businesses[idx], ...data };
       db.setBusinesses(businesses);
+      await syncBusinessToServer(businesses[idx]);
     }
   },
   connectBusinessEmail: async (id: string, email: string) => {
@@ -683,6 +792,7 @@ export const mockService = {
       businesses[idx].isEmailConnected = true;
       businesses[idx].integratedEmail = email;
       db.setBusinesses(businesses);
+      syncBusinessToServer(businesses[idx]);
     }
   },
   disconnectBusinessEmail: async (id: string) => {
@@ -692,6 +802,7 @@ export const mockService = {
       businesses[idx].isEmailConnected = false;
       delete businesses[idx].integratedEmail;
       db.setBusinesses(businesses);
+      syncBusinessToServer(businesses[idx]);
     }
   },
   toggleDiscountOverride: async (id: string, enabled: boolean) => {
@@ -706,14 +817,29 @@ export const mockService = {
   },
   deleteBusiness: async (id: string) => {
      db.setBusinesses(db.getBusinesses().filter(b => b.id !== id));
+     authApi('delete-business', { id });
   },
   verifySubAdmin: async (e: string, p: string) => {
+    const result = await authApi('verify-sub-admin', { email: e, password: p });
+    if (result.success && result.staff) return result.staff;
     const admins = db.getSubAdmins();
     return admins.find(a => a.email === e && a.password === p) || null;
   },
   verifySubMerchant: async (e: string, p: string, merchantName: string) => {
+    const result = await authApi('verify-sub-merchant', { email: e, password: p, merchantName });
+    if (result.success && result.business) {
+      const biz = result.business as Business;
+      const businesses = db.getBusinesses();
+      const idx = businesses.findIndex(b => b.id === biz.id);
+      if (idx !== -1) {
+        businesses[idx] = { ...businesses[idx], ...biz };
+      } else {
+        businesses.push(biz);
+      }
+      db.setBusinesses(businesses);
+      return biz;
+    }
     const businesses = db.getBusinesses();
-    // Validate email, password AND merchant name (case-insensitive)
     const biz = businesses.find(b => 
       b.subMerchantEmail === e && 
       b.subMerchantPassword === p && 
@@ -742,10 +868,23 @@ export const mockService = {
     return true;
   },
 
-  getSuperAdminConfig: async () => db.getSuperAdminConfig(),
-  setSuperAdminConfig: async (config: SuperAdminConfig) => db.setSuperAdminConfig(config),
+  getSuperAdminConfig: async () => {
+    const result = await authApi('get-admin-config');
+    if (result.success && result.config) {
+      const config = result.config as SuperAdminConfig;
+      db.setSuperAdminConfig(config);
+      return config;
+    }
+    return db.getSuperAdminConfig();
+  },
+  setSuperAdminConfig: async (config: SuperAdminConfig) => {
+    db.setSuperAdminConfig(config);
+    await syncAdminConfigToServer(config);
+  },
 
   verifySuperAdmin: async (email: string, password: string): Promise<boolean> => {
+    const result = await authApi('verify-admin', { email, password });
+    if (result.success) return true;
     const config = db.getSuperAdminConfig();
     return config.email === email && config.password === password;
   },
@@ -758,15 +897,44 @@ export const mockService = {
   },
 
   verifyBusinessOwnerByLoginId: async (loginId: string, password: string): Promise<Business | null> => {
+    const result = await authApi('verify-merchant', { loginId, password });
+    if (result.success && result.business) {
+      const biz = result.business as Business;
+      const businesses = db.getBusinesses();
+      const idx = businesses.findIndex(b => b.id === biz.id);
+      if (idx !== -1) {
+        businesses[idx] = { ...businesses[idx], ...biz };
+      } else {
+        businesses.push(biz);
+      }
+      db.setBusinesses(businesses);
+
+      if (biz.clusterId) {
+        const clusterResult = await authApi('get-all-clusters');
+        if (clusterResult.success && clusterResult.clusters) {
+          const existingClusters = db.getRawClusters();
+          for (const sc of clusterResult.clusters) {
+            if (!existingClusters.find((c: any) => c.id === sc.id)) {
+              existingClusters.push(sc);
+            }
+          }
+          db.setClusters(existingClusters);
+        }
+      }
+
+      return biz;
+    }
     const businesses = db.getBusinesses();
-    const biz = businesses.find(b => b.loginId === loginId);
-    if (!biz) return null;
-    const storedPassword = biz.ownerPassword || '1234';
-    if (storedPassword === password) return biz;
+    const localBiz = businesses.find(b => b.loginId === loginId);
+    if (!localBiz) return null;
+    const storedPassword = localBiz.ownerPassword || '1234';
+    if (storedPassword === password) return localBiz;
     return null;
   },
 
   getBusinessByLoginId: async (loginId: string): Promise<Business | null> => {
+    const result = await authApi('get-business-by-login-id', { loginId });
+    if (result.success && result.business) return result.business as Business;
     const businesses = db.getBusinesses();
     return businesses.find(b => b.loginId === loginId) || null;
   },
@@ -777,6 +945,7 @@ export const mockService = {
     if (idx !== -1) {
       businesses[idx].ownerPassword = newPassword;
       db.setBusinesses(businesses);
+      await syncBusinessToServer(businesses[idx]);
     }
   },
 
@@ -802,6 +971,8 @@ export const mockService = {
   },
 
   getRecoveryEmail: async (role: string, identifier: string, merchantName?: string): Promise<string | null> => {
+    const result = await authApi('get-recovery-email', { role, identifier, merchantName });
+    if (result.success && result.email) return result.email;
     if (role === UserRole.SUPER_ADMIN) {
       return db.getSuperAdminConfig().email;
     }
@@ -829,13 +1000,16 @@ export const mockService = {
 
     if (role === UserRole.SUPER_ADMIN) {
       const config = db.getSuperAdminConfig();
-      db.setSuperAdminConfig({ ...config, password: newPassword });
+      const updated = { ...config, password: newPassword };
+      db.setSuperAdminConfig(updated);
+      syncAdminConfigToServer(updated);
     } else if (role === UserRole.BUSINESS_OWNER && businessId) {
       const businesses = db.getBusinesses();
       const idx = businesses.findIndex(b => b.id === businessId);
       if (idx !== -1) {
         businesses[idx].ownerPassword = newPassword;
         db.setBusinesses(businesses);
+        syncBusinessToServer(businesses[idx]);
       }
     } else if (role === UserRole.SUB_ADMIN) {
       const admins = db.getSubAdmins();
@@ -843,6 +1017,7 @@ export const mockService = {
       if (idx !== -1) {
         admins[idx].password = newPassword;
         db.setSubAdmins(admins);
+        syncSubAdminsToServer(admins);
       }
     } else if (role === UserRole.SUB_MERCHANT) {
       const businesses = db.getBusinesses();
@@ -850,6 +1025,7 @@ export const mockService = {
       if (idx !== -1) {
         businesses[idx].subMerchantPassword = newPassword;
         db.setBusinesses(businesses);
+        syncBusinessToServer(businesses[idx]);
       }
     }
 
@@ -902,4 +1078,7 @@ export const mockService = {
       return false;
     }
   },
+
+  syncInitialData: () => syncInitialDataToServer(),
+  hydrateFromServer: () => hydrateFromServer(),
 };

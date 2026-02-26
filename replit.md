@@ -8,7 +8,7 @@ A cross-business customer sharing and growth platform allowing local businesses 
 - **Email Server** — Minimal Express server at port 3001 (Gmail SMTP via Nodemailer)
 - **Routing** — React Router DOM v7 with HashRouter for SPA navigation
 - **Auth** — Custom AuthContext with 4 user roles, all password-protected
-- **Data** — mockService using localStorage for full persistence
+- **Data** — mockService using localStorage for UI data + PostgreSQL for cross-device auth sync
 - **Styling** — Tailwind CSS v3 + tailwindcss-animate (PostCSS build)
 - **PDF** — jsPDF for bulk coupon PDF generation and printing
 - **Charts** — recharts for analytics visualizations
@@ -50,6 +50,17 @@ All 4 roles support forgot-password via email OTP:
 Set these in Replit environment secrets:
 - `SMTP_EMAIL` — Gmail address that sends recovery emails
 - `SMTP_APP_PASSWORD` — Gmail App Password (16-char, from Google Account security)
+
+## Cross-Device Auth (PostgreSQL Sync)
+
+All authentication data is synced to PostgreSQL so login works from any device:
+- **auth_businesses** — Stores loginId, ownerPassword, full business data (JSONB)
+- **auth_super_admin** — Stores super admin email + password
+- **auth_sub_admins** — Stores sub-admin credentials + data (JSONB)
+- **auth_clusters** — Stores cluster data for hydration on new devices
+- mockService auto-syncs to backend on every create/update/delete
+- On login, credentials are verified against PostgreSQL (falls back to localStorage)
+- On merchant login, business + cluster data is hydrated into localStorage
 
 ## Admin Security Features
 
@@ -97,6 +108,7 @@ Set these in Replit environment secrets:
 - `tailwindcss-animate` — animations (animate-in, fade-in, slide-in, zoom-in)
 - `express`, `cors` — email API server
 - `nodemailer` — Gmail SMTP email sending
+- `pg` — PostgreSQL client for cross-device auth sync
 - `tsx` — TypeScript execution for email server
 
 ## Production Deployment

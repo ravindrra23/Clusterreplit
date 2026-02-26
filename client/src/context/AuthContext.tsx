@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, UserRole, SubAdminPermissions } from '@/types/types';
 import { mockService } from '@/services/mockService';
 
@@ -14,6 +14,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children?: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    mockService.hydrateFromServer();
+  }, []);
 
   const login = async (role: UserRole, identifier: string, password?: string, merchantName?: string): Promise<boolean> => {
     if (role === UserRole.SUPER_ADMIN) {
@@ -32,6 +36,7 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
             canDownloadData: true,
           }
         });
+        mockService.syncInitialData();
         return true;
       }
       return false;
@@ -45,6 +50,7 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
           role: UserRole.SUB_ADMIN,
           permissions: staff.permissions
         });
+        mockService.hydrateFromServer();
         return true;
       }
       return false;
