@@ -30,12 +30,12 @@ The `@/` alias maps to `./client/src/` (configured in both vite.config.ts and ts
 
 ## User Roles & Login Modes
 
-| Role | Mode | Description |
-|------|------|-------------|
-| `SUPER_ADMIN` | SUPER | Email + password (default: admin@clustergrowth.com / admin@123) |
-| `SUB_ADMIN` | STAFF | Email + password, permission-based access |
-| `BUSINESS_OWNER` | MERCHANT | Select business + password (default: 1234) |
-| `SUB_MERCHANT` | COUNTER | Merchant name + email + password (staff at counter) |
+| Role | Mode | Login Route | Description |
+|------|------|-------------|-------------|
+| `SUPER_ADMIN` | SUPER | `/superadmin-login-str` | Email + password (default: admin@clustergrowth.com / admin@123) |
+| `SUB_ADMIN` | STAFF | `/superadmin-login-str` | Email + password, permission-based access |
+| `BUSINESS_OWNER` | MERCHANT | `/login-merchant-str` | Login ID + password (set by admin) |
+| `SUB_MERCHANT` | COUNTER | `/login-merchant-str` | Merchant name + email + password (staff at counter) |
 
 ## Password Recovery System
 

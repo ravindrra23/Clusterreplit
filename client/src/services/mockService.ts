@@ -757,6 +757,20 @@ export const mockService = {
     return storedPassword === password;
   },
 
+  verifyBusinessOwnerByLoginId: async (loginId: string, password: string): Promise<Business | null> => {
+    const businesses = db.getBusinesses();
+    const biz = businesses.find(b => b.loginId === loginId);
+    if (!biz) return null;
+    const storedPassword = biz.ownerPassword || '1234';
+    if (storedPassword === password) return biz;
+    return null;
+  },
+
+  getBusinessByLoginId: async (loginId: string): Promise<Business | null> => {
+    const businesses = db.getBusinesses();
+    return businesses.find(b => b.loginId === loginId) || null;
+  },
+
   updateBusinessOwnerPassword: async (businessId: string, newPassword: string) => {
     const businesses = db.getBusinesses();
     const idx = businesses.findIndex(b => b.id === businessId);

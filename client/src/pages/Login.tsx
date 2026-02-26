@@ -20,6 +20,7 @@ const Login: React.FC<LoginProps> = ({ panelType = 'merchant' }) => {
   const [loading, setLoading] = useState(true);
   
   const [mode, setMode] = useState<LoginMode>(panelType === 'admin' ? 'SUPER' : 'MERCHANT');
+  const [merchantLoginId, setMerchantLoginId] = useState('');
   const [merchantName, setMerchantName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -101,8 +102,9 @@ const Login: React.FC<LoginProps> = ({ panelType = 'merchant' }) => {
         roleForOTP = UserRole.SUPER_ADMIN;
         identifier = config.email;
       } else if (mode === 'MERCHANT') {
-        const biz = businesses.find(b => b.id === forgotBusinessId);
-        if (!biz) { setForgotError('Business not found.'); setForgotLoading(false); return; }
+        if (!merchantLoginId.trim()) { setForgotError('Please enter your Login ID on the login form first.'); setForgotLoading(false); return; }
+        const biz = await mockService.getBusinessByLoginId(merchantLoginId.trim());
+        if (!biz) { setForgotError('Login ID not found.'); setForgotLoading(false); return; }
         emailToSend = biz.email;
         roleForOTP = UserRole.BUSINESS_OWNER;
         identifier = biz.email;
@@ -204,7 +206,11 @@ const Login: React.FC<LoginProps> = ({ panelType = 'merchant' }) => {
       : mode === 'STAFF' ? UserRole.SUB_ADMIN
       : UserRole.SUB_MERCHANT;
 
-    const bizId = mode === 'MERCHANT' ? forgotBusinessId : undefined;
+    let bizId: string | undefined;
+    if (mode === 'MERCHANT' && merchantLoginId.trim()) {
+      const biz = await mockService.getBusinessByLoginId(merchantLoginId.trim());
+      bizId = biz?.id;
+    }
     const success = await mockService.resetPasswordByOTP(forgotEmail, roleForOTP, enteredOTP, newPassword, bizId);
     setForgotLoading(false);
 
@@ -217,15 +223,10 @@ const Login: React.FC<LoginProps> = ({ panelType = 'merchant' }) => {
 
   const handleMerchantLogin = async () => {
     setLoginError(null);
-    const business = businesses.find(b => b.id === selectedBusinessId);
-    
-    if (business) {
-      const now = new Date();
-      const expiry = new Date(business.expiryDate);
-      if (expiry < now) {
-        setLoginError("Your subscription has expired. Please contact the administrator for renewal.");
-        return;
-      }
+
+    if (!merchantLoginId.trim()) {
+      setLoginError("Please enter your Login ID.");
+      return;
     }
 
     if (!merchantPassword) {
@@ -235,9 +236,9 @@ const Login: React.FC<LoginProps> = ({ panelType = 'merchant' }) => {
 
     setIsLoggingIn(true);
     setTimeout(async () => {
-      const success = await login(UserRole.BUSINESS_OWNER, selectedBusinessId, merchantPassword);
+      const success = await login(UserRole.BUSINESS_OWNER, merchantLoginId.trim(), merchantPassword);
       if (!success) {
-        setLoginError("Incorrect password. Please try again or use Forgot Password.");
+        setLoginError("Invalid Login ID or Password. Please try again or use Forgot Password.");
         setIsLoggingIn(false);
       }
     }, 600);
@@ -518,27 +519,21 @@ const Login: React.FC<LoginProps> = ({ panelType = 'merchant' }) => {
              <div className="space-y-5">
                 <div className="text-center mb-4">
                    <h2 className="text-lg sm:text-xl font-bold text-slate-800">Merchant Dashboard</h2>
-                   <p className="text-xs sm:text-sm text-slate-500 mt-1">Select your business and enter password</p>
+                   <p className="text-xs sm:text-sm text-slate-500 mt-1">Enter your Login ID and password</p>
                 </div>
 
-                {loading ? (
-                  <div className="flex justify-center py-8">
-                    <Loader className="animate-spin text-indigo-600" size={32} />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="relative group">
-                      <select 
-                        value={selectedBusinessId}
-                        onChange={(e) => { setSelectedBusinessId(e.target.value); setLoginError(null); }}
-                        className="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-900 text-sm font-bold rounded-2xl focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600 block p-4 pr-10 transition-all outline-none"
-                      >
-                        {businesses.map((b) => (
-                          <option key={b.id} value={b.id}>{b.name}{b.loginId ? ` (${b.loginId})` : ''}</option>
-                        ))}
-                      </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                         <ChevronRight size={18} className="rotate-90" />
+                <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Login ID</label>
+                      <div className="relative">
+                        <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <input 
+                          type="text" value={merchantLoginId}
+                          onChange={(e) => { setMerchantLoginId(e.target.value); setLoginError(null); }}
+                          className="w-full pl-11 sm:pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                          placeholder="Enter your Login ID"
+                          data-testid="input-merchant-login-id"
+                        />
                       </div>
                     </div>
 
@@ -569,8 +564,7 @@ const Login: React.FC<LoginProps> = ({ panelType = 'merchant' }) => {
                     <button type="button" onClick={openForgot} className="w-full text-[10px] text-center text-indigo-500 hover:text-indigo-700 font-bold transition-colors">
                       Forgot Password?
                     </button>
-                  </div>
-                )}
+                </div>
              </div>
           ) : mode === 'COUNTER' || mode === 'STAFF' ? (
              <form onSubmit={(e) => handleCredentialLogin(e, mode === 'COUNTER' ? UserRole.SUB_MERCHANT : UserRole.SUB_ADMIN)} className="space-y-5">

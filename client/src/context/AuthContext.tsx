@@ -51,22 +51,19 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
     } else if (role === UserRole.BUSINESS_OWNER) {
       if (!identifier || !password) return false;
       try {
-        const business = await mockService.getBusinessById(identifier);
+        const business = await mockService.verifyBusinessOwnerByLoginId(identifier, password);
         if (business) {
           const now = new Date();
           const expiry = new Date(business.expiryDate);
           if (expiry < now) return false;
-          const valid = await mockService.verifyBusinessOwner(identifier, password);
-          if (valid) {
-            setUser({
-              id: business.id,
-              name: business.ownerName,
-              role: UserRole.BUSINESS_OWNER,
-              businessId: business.id,
-              profilePhotoUrl: business.profilePhotoUrl,
-            });
-            return true;
-          }
+          setUser({
+            id: business.id,
+            name: business.ownerName,
+            role: UserRole.BUSINESS_OWNER,
+            businessId: business.id,
+            profilePhotoUrl: business.profilePhotoUrl,
+          });
+          return true;
         }
       } catch (error) {
         console.error("Failed to login", error);
