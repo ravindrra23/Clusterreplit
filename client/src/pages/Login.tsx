@@ -7,14 +7,19 @@ import { Users, Store, Shield, ChevronRight, Loader, Lock, Mail, Eye, EyeOff, Al
 
 type LoginMode = 'MERCHANT' | 'STAFF' | 'SUPER' | 'COUNTER';
 type ForgotStep = 'ENTER_EMAIL' | 'ENTER_OTP' | 'SET_PASSWORD' | 'SUCCESS';
+type LoginPanelType = 'merchant' | 'admin';
 
-const Login: React.FC = () => {
+interface LoginProps {
+  panelType?: LoginPanelType;
+}
+
+const Login: React.FC<LoginProps> = ({ panelType = 'merchant' }) => {
   const { login } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   
-  const [mode, setMode] = useState<LoginMode>('MERCHANT');
+  const [mode, setMode] = useState<LoginMode>(panelType === 'admin' ? 'SUPER' : 'MERCHANT');
   const [merchantName, setMerchantName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -469,31 +474,38 @@ const Login: React.FC = () => {
         </div>
         
         <div className="p-6 sm:p-8">
-          <div className="grid grid-cols-4 bg-slate-100 p-1 rounded-2xl mb-6 sm:mb-8">
-             <button 
-               onClick={() => { setMode('MERCHANT'); setLoginError(null); }}
-               className={`flex items-center justify-center py-2 rounded-xl text-[9px] sm:text-xs font-bold transition-all ${mode === 'MERCHANT' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-             >
-               Owner
-             </button>
-             <button 
-               onClick={() => { setMode('COUNTER'); setLoginError(null); }}
-               className={`flex items-center justify-center py-2 rounded-xl text-[9px] sm:text-xs font-bold transition-all ${mode === 'COUNTER' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-             >
-               Staff
-             </button>
-             <button 
-               onClick={() => { setMode('STAFF'); setLoginError(null); }}
-               className={`flex items-center justify-center py-2 rounded-xl text-[9px] sm:text-xs font-bold transition-all ${mode === 'STAFF' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-             >
-               Platform
-             </button>
-             <button 
-               onClick={() => { setMode('SUPER'); setLoginError(null); }}
-               className={`flex items-center justify-center py-2 rounded-xl text-[9px] sm:text-xs font-bold transition-all ${mode === 'SUPER' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-             >
-               Admin
-             </button>
+          <div className={`grid ${panelType === 'merchant' ? 'grid-cols-2' : 'grid-cols-2'} bg-slate-100 p-1 rounded-2xl mb-6 sm:mb-8`}>
+             {panelType === 'merchant' ? (
+               <>
+                 <button 
+                   onClick={() => { setMode('MERCHANT'); setLoginError(null); }}
+                   className={`flex items-center justify-center py-2 rounded-xl text-[9px] sm:text-xs font-bold transition-all ${mode === 'MERCHANT' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                 >
+                   Owner
+                 </button>
+                 <button 
+                   onClick={() => { setMode('COUNTER'); setLoginError(null); }}
+                   className={`flex items-center justify-center py-2 rounded-xl text-[9px] sm:text-xs font-bold transition-all ${mode === 'COUNTER' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                 >
+                   Staff
+                 </button>
+               </>
+             ) : (
+               <>
+                 <button 
+                   onClick={() => { setMode('SUPER'); setLoginError(null); }}
+                   className={`flex items-center justify-center py-2 rounded-xl text-[9px] sm:text-xs font-bold transition-all ${mode === 'SUPER' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                 >
+                   Admin
+                 </button>
+                 <button 
+                   onClick={() => { setMode('STAFF'); setLoginError(null); }}
+                   className={`flex items-center justify-center py-2 rounded-xl text-[9px] sm:text-xs font-bold transition-all ${mode === 'STAFF' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                 >
+                   Platform
+                 </button>
+               </>
+             )}
           </div>
 
           {loginError && (

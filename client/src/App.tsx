@@ -18,15 +18,14 @@ import Analytics from '@/pages/Analytics';
 import ActivityLog from '@/pages/ActivityLog';
 import Layout from '@/components/Layout';
 
-const ProtectedRoute = ({ children, allowedRoles }: { children?: React.ReactNode; allowedRoles?: UserRole[] }) => {
+const ProtectedRoute = ({ children, allowedRoles, loginPath = '/login' }: { children?: React.ReactNode; allowedRoles?: UserRole[]; loginPath?: string }) => {
   const { user } = useAuth();
   
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={loginPath} replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    // Role-based redirection for unauthorized access
     if (user.role === UserRole.SUB_ADMIN || user.role === UserRole.SUPER_ADMIN) {
       return <Navigate to="/admin" replace />;
     }
@@ -44,7 +43,8 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
+      <Route path="/login" element={!user ? <Login panelType="merchant" /> : <Navigate to="/" replace />} />
+      <Route path="/admin-login" element={!user ? <Login panelType="admin" /> : <Navigate to="/" replace />} />
       
       <Route path="/" element={
         !user ? <Navigate to="/login" replace /> : 
@@ -89,32 +89,32 @@ const AppRoutes = () => {
 
       {/* Admin & Sub-Admin Routes */}
       <Route path="/admin" element={
-        <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.SUB_ADMIN]}>
+        <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.SUB_ADMIN]} loginPath="/admin-login">
           <AdminDashboard />
         </ProtectedRoute>
       } />
       <Route path="/admin/clusters" element={
-        <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.SUB_ADMIN]}>
+        <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.SUB_ADMIN]} loginPath="/admin-login">
           <AdminClusters />
         </ProtectedRoute>
       } />
       <Route path="/admin/businesses" element={
-        <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.SUB_ADMIN]}>
+        <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.SUB_ADMIN]} loginPath="/admin-login">
           <AdminBusinesses />
         </ProtectedRoute>
       } />
       <Route path="/admin/reports" element={
-        <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.SUB_ADMIN]}>
+        <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.SUB_ADMIN]} loginPath="/admin-login">
           <AdminReports />
         </ProtectedRoute>
       } />
       <Route path="/admin/activity" element={
-        <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.SUB_ADMIN]}>
+        <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN, UserRole.SUB_ADMIN]} loginPath="/admin-login">
           <AdminActivityLog />
         </ProtectedRoute>
       } />
       <Route path="/admin/settings" element={
-        <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+        <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN]} loginPath="/admin-login">
           <AdminSettings />
         </ProtectedRoute>
       } />
